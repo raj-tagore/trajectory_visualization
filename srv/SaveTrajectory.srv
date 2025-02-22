@@ -1,0 +1,7 @@
+# Request
+string file_name
+float64 duration
+---
+# Response
+bool success
+string message
