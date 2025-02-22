@@ -1,0 +1,20 @@
+<launch>
+  <!-- Launch the Anscer robot simulation in Gazebo -->
+  <include file="$(find start_anscer)/launch/start_anscer.launch" />
+
+  <!-- Add a delay to ensure Gazebo is fully loaded -->
+  <arg name="wait_time" default="5.0" />  <!-- Wait time in seconds -->
+  <node pkg="rospy" type="sleep" name="sleep" args="$(arg wait_time)" />
+
+  <!-- Launch the teleop node for keyboard control -->
+  <include file="$(find anscer_teleop)/launch/anscer_teleop_key.launch" />
+
+  <!-- Launch the Trajectory Publisher and Saver Node -->
+  <node pkg="trajectory_visualization" type="trajectory_publisher_saver_node" name="trajectory_publisher_saver_node" output="screen" launch-prefix="bash -c 'sleep $(arg wait_time); $0 $@'" />
+
+  <!-- Launch the Trajectory Reader and Publisher Node -->
+  <node pkg="trajectory_visualization" type="trajectory_reader_publisher" name="trajectory_reader_publisher" output="screen" launch-prefix="bash -c 'sleep $(arg wait_time); $0 $@'" />
+
+  <!-- Launch RViz with the preconfigured trajectory visualization -->
+  <node pkg="rviz" type="rviz" name="rviz" args="-d $(find trajectory_visualization)/rviz/trajectory-2.rviz" launch-prefix="bash -c 'sleep $(arg wait_time); $0 $@'" />
+</launch>

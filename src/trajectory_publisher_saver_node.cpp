@@ -2,7 +2,7 @@
 #include "nav_msgs/Odometry.h"
 #include "visualization_msgs/MarkerArray.h"
 #include "visualization_msgs/Marker.h"
-#include "trajectory_visualization/SaveTrajectory.h"  // Custom service header
+#include "trajectory_visualization/SaveTrajectory.h" 
 #include <deque>
 #include <fstream>
 
@@ -37,8 +37,8 @@ void odomCallback(const nav_msgs::Odometry::ConstPtr& msg) {
   marker.scale.z = 0.1;
   marker.color.a = 1.0; 
   marker.color.r = 0.0;
-  marker.color.g = 1.0;
-  marker.color.b = 0.0;
+  marker.color.g = 0.0;
+  marker.color.b = 1.0;
 
   // Add each stored position to the marker's point list.
   for (const auto &p : trajectory_data) {
@@ -62,7 +62,7 @@ bool saveTrajectoryCallback(trajectory_visualization::SaveTrajectory::Request &r
     if ((now - it->stamp).toSec() <= duration) {
       filtered_data.push_front(*it);
     } else {
-      break;  // Since the data is in order, we can stop once the condition fails.
+      break;
     }
   }
 
@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
   ros::Subscriber odom_sub = nh.subscribe("odom", 1000, odomCallback);
 
   // Publisher for visualization markers.
-  marker_pub = nh.advertise<visualization_msgs::MarkerArray>("trajectory_marker", 1);
+  marker_pub = nh.advertise<visualization_msgs::MarkerArray>("robot_current_path", 1);
 
   // Advertise the save trajectory service.
   ros::ServiceServer service = nh.advertiseService("save_trajectory", saveTrajectoryCallback);

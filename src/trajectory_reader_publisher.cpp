@@ -25,7 +25,12 @@ std::vector<TrajectoryPoint> readTrajectoryFile(const std::string& filename) {
     ROS_ERROR("Could not open file: %s", filename.c_str());
     return points;
   }
+  
   std::string line;
+  // Skip the header line
+  std::getline(infile, line);
+  
+  // Read the rest of the file
   while (std::getline(infile, line)) {
     std::stringstream ss(line);
     TrajectoryPoint pt;
@@ -39,12 +44,46 @@ std::vector<TrajectoryPoint> readTrajectoryFile(const std::string& filename) {
   return points;
 }
 
+// Function to convert trajectory points to marker array
+visualization_msgs::MarkerArray trajectoryToMarkerArray(const std::vector<TrajectoryPoint>& trajectory) {
+    visualization_msgs::MarkerArray marker_array;
+    int id = 0;
+    // Process each trajectory point.
+    for (const auto& pt : trajectory) {
+        visualization_msgs::Marker marker;
+        marker.header.frame_id = "odom"; 
+        marker.header.stamp = ros::Time::now();
+        marker.ns = "trajectory";
+        marker.id = id++;
+        marker.type = visualization_msgs::Marker::SPHERE;
+        marker.action = visualization_msgs::Marker::ADD;
+        
+        // Directly assign trajectory point to marker position
+        marker.pose.position.x = pt.x;
+        marker.pose.position.y = pt.y;
+        marker.pose.position.z = pt.z;
+        
+        // Set marker orientation, scale, and color.
+        marker.pose.orientation.w = 1.0;
+        marker.scale.x = 0.1;
+        marker.scale.y = 0.1;
+        marker.scale.z = 0.1;
+        marker.color.a = 1.0; // Fully opaque
+        marker.color.r = 0.0;
+        marker.color.g = 1.0;
+        marker.color.b = 0.0;
+        
+        marker_array.markers.push_back(marker);
+    }
+    return marker_array;
+}
+
 int main(int argc, char** argv) {
   ros::init(argc, argv, "trajectory_reader_publisher");
   ros::NodeHandle nh;
 
   // Publisher for the MarkerArray.
-  ros::Publisher marker_pub = nh.advertise<visualization_msgs::MarkerArray>("trajectory_marker_array", 1);
+  ros::Publisher marker_pub = nh.advertise<visualization_msgs::MarkerArray>("robot_saved_path", 1);
 
   // Initialize tf2 listener to perform transformations.
   tf2_ros::Buffer tfBuffer;
@@ -54,67 +93,16 @@ int main(int argc, char** argv) {
   std::string filename;
   nh.param<std::string>("trajectory_file", filename, "trajectory.csv");
 
-  // Read trajectory data from file.
-  std::vector<TrajectoryPoint> trajectory = readTrajectoryFile(filename);
-
-  visualization_msgs::MarkerArray marker_array;
-  int id = 0;
-  // Process each trajectory point.
-  for (const auto& pt : trajectory) {
-    visualization_msgs::Marker marker;
-    marker.header.frame_id = "odom";  // Final visualization frame.
-    marker.header.stamp = ros::Time::now();
-    marker.ns = "trajectory";
-    marker.id = id++;
-    marker.type = visualization_msgs::Marker::SPHERE;
-    marker.action = visualization_msgs::Marker::ADD;
-    
-    // Create a point from the file data.
-    geometry_msgs::Point point;
-    point.x = pt.x;
-    point.y = pt.y;
-    point.z = pt.z;
-    
-    // Initially, we assume the data is in a frame called "saved_frame".
-    // We transform it to "odom". If your data is already in odom, this step can be skipped.
-    geometry_msgs::PointStamped point_in, point_out;
-    point_in.header.frame_id = "saved_frame";  
-    point_in.header.stamp = ros::Time::now();
-    point_in.point = point;
-
-    try {
-      // Lookup transformation from "saved_frame" to "odom".
-      geometry_msgs::TransformStamped transformStamped =
-        tfBuffer.lookupTransform("odom", "saved_frame", ros::Time(0), ros::Duration(1.0));
-      tf2::doTransform(point_in, point_out, transformStamped);
-      marker.pose.position = point_out.point;
-    } catch (tf2::TransformException &ex) {
-      ROS_WARN("Could not transform point: %s", ex.what());
-      // Fallback: publish the original point.
-      marker.pose.position = point;
-    }
-    
-    // Set marker orientation, scale, and color.
-    marker.pose.orientation.w = 1.0;
-    marker.scale.x = 0.1;
-    marker.scale.y = 0.1;
-    marker.scale.z = 0.1;
-    marker.color.a = 1.0; // Fully opaque
-    marker.color.r = 0.0;
-    marker.color.g = 1.0;
-    marker.color.b = 0.0;
-    
-    marker_array.markers.push_back(marker);
-  }
-
   // Publish the marker array repeatedly.
   ros::Rate loop_rate(1);
   while (ros::ok()) {
-    // Update header timestamps if needed.
-    for (auto& marker : marker_array.markers) {
-      marker.header.stamp = ros::Time::now();
-    }
+    // Read trajectory data from file in each iteration
+    std::vector<TrajectoryPoint> trajectory = readTrajectoryFile(filename);
+    
+    // Convert trajectory to marker array and publish
+    visualization_msgs::MarkerArray marker_array = trajectoryToMarkerArray(trajectory);
     marker_pub.publish(marker_array);
+    
     ros::spinOnce();
     loop_rate.sleep();
   }

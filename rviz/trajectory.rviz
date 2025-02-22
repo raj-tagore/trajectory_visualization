@@ -1,0 +1,10 @@
+Panels:
+  - Class: rviz/Displays
+    Name: Displays
+Visualization Manager:
+  Fixed Frame: odom
+Displays:
+  - Class: rviz/MarkerArray
+    Name: TrajectoryMarkers
+    Topic: /trajectory_marker_array
+    Queue Size: 10

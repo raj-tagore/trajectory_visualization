@@ -40,3 +40,7 @@ add_dependencies(hw_test_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPOR
 add_executable(trajectory_publisher_saver_node src/trajectory_publisher_saver_node.cpp)
 target_link_libraries(trajectory_publisher_saver_node ${catkin_LIBRARIES})
 add_dependencies(trajectory_publisher_saver_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+add_executable(trajectory_reader_publisher src/trajectory_reader_publisher.cpp)
+target_link_libraries(trajectory_reader_publisher ${catkin_LIBRARIES})
+add_dependencies(trajectory_reader_publisher ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
