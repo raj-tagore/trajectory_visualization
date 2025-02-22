@@ -79,7 +79,25 @@ This will:
 
 ### Nodes
 - `trajectory_publisher_saver_node`: Collects and publishes robot trajectory as MarkerArray
+  ```
+  while running:
+      listen to /odom topic
+      store points in memory buffer
+      publish blue markers to /robot_current_path
+      
+      on save_trajectory service call:
+          filter last N seconds of trajectory
+          save filtered points to CSV file
+  ```
 - `trajectory_reader_publisher`: Reads and republishes saved trajectory data
+  ```
+  while running:
+      read trajectory.csv
+      convert points to green markers
+      clear previous markers
+      publish new markers to /robot_saved_path
+      sleep for 1 second
+  ```
 
 ### Service
 - `SaveTrajectory.srv`: Custom service for specifying filename and duration for trajectory saving

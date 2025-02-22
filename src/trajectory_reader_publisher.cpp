@@ -47,8 +47,18 @@ std::vector<TrajectoryPoint> readTrajectoryFile(const std::string& filename) {
 // Function to convert trajectory points to marker array
 visualization_msgs::MarkerArray trajectoryToMarkerArray(const std::vector<TrajectoryPoint>& trajectory) {
     visualization_msgs::MarkerArray marker_array;
+    
+    // Add a deletion marker to clear previous markers
+    visualization_msgs::Marker delete_marker;
+    delete_marker.header.frame_id = "odom";
+    delete_marker.header.stamp = ros::Time::now();
+    delete_marker.ns = "trajectory";
+    delete_marker.id = 0;
+    delete_marker.action = visualization_msgs::Marker::DELETEALL;
+    marker_array.markers.push_back(delete_marker);
+
+    // Process each trajectory point
     int id = 0;
-    // Process each trajectory point.
     for (const auto& pt : trajectory) {
         visualization_msgs::Marker marker;
         marker.header.frame_id = "odom"; 
